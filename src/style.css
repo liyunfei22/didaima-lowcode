@@ -1,0 +1,77 @@
+/* 全局基础样式（编辑器/画布的具体样式在各 .vue 文件里 scoped） */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family:
+    system-ui,
+    -apple-system, 'Segoe UI', Roboto, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  color: #303133;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 页面根容器（M.Page 渲染 class="m-page"） */
+.m-page {
+  min-height: 100vh;
+  padding: 16px;
+  background: #f5f7fa;
+}
+
+/* 物料面板里的可拖拽条目（M4 使用） */
+.m-material-item {
+  cursor: grab;
+}
+
+/* 画布节点统一不设 outline，选中态由编辑器 wrapper 处理 */
+[data-node-id] {
+  position: relative;
+}
+
+/* ===== 编辑器面板共用 ===== */
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.panel-title {
+  flex: none;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  border-bottom: 1px solid #f0f0f0;
+}
+.panel-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  min-height: 0;
+}
+
+/* ===== 拖拽（M4，SortableJS） ===== */
+/* 拖拽时的占位"幽灵"元素（Sortable ghostClass） */
+.lc-ghost {
+  opacity: 0.4;
+  outline: 1.5px dashed #409eff;
+  outline-offset: 2px;
+  background: rgba(64, 158, 255, 0.1);
+}
+/* 拖拽中的漂浮元素（clone） */
+.lc-drag {
+  cursor: grabbing;
+}
+
+/* 画布里可拖拽条目：鼠标手势提示 */
+.canvas-node {
+  cursor: default;
+}
