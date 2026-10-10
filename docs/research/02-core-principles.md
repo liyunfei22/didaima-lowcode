@@ -37,7 +37,7 @@
 
 1. **注册表**：`Map<type, Component>`。
 2. **递归渲染**：`renderNode(node, scope)` → 解 props → 递归 children。
-3. **props 双态解析**：字面量直接透传；表达式绑定（`JSExpression`/`{{ }}`）走求值器。**v-model 无特殊处理**：`modelValue` 是普通 prop、`onUpdate:modelValue` 是普通 listener，`<component :is v-bind v-on>` 原样透传即等价模板 `v-model`。
+3. **props 双态解析**：字面量直接透传；表达式绑定（`JSExpression`/`&#123;&#123; &#125;&#125;`）走求值器。**v-model 无特殊处理**：`modelValue` 是普通 prop、`onUpdate:modelValue` 是普通 listener，`<component :is v-bind v-on>` 原样透传即等价模板 `v-model`。
 4. **作用域链**：渲染时逐层 push scope，标识符沿链向上查找（类似 JS 闭包）。**loop 注入 `item`/`index`**（lowcode 用 `loop` + `loopArgs: ['item','index']`）。
 5. **条件渲染**：`condition` 字段求值，false 返回 null。
 
@@ -85,7 +85,7 @@ component（真实组件代码）                                     → 驱动
 
 **安全关键**：自研求值器逐节点解释 AST，**没有 eval、没有 Function、原型链不可达**，天然 CSP 安全。scope 用 `Object.create(null)` 防 `__proto__`/`constructor` 污染。对比：`new Function('scope', 'return (' + expr + ')')` 30 行搞定但违反 CSP `unsafe-eval` 且裸 eval 暴露原型链。
 
-**我们的实现**（`src/core/expression/`）：**jsep 只做解析**（parser），**自研 AST 求值器**，`{{ }}` 模板插值 + 完整表达式两种模式，白名单函数 + 黑名单成员。这是 M7 的核心教学点。
+**我们的实现**（`src/core/expression/`）：**jsep 只做解析**（parser），**自研 AST 求值器**，`&#123;&#123; &#125;&#125;` 模板插值 + 完整表达式两种模式，白名单函数 + 黑名单成员。这是 M7 的核心教学点。
 
 ---
 

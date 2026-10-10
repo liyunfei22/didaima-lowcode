@@ -46,7 +46,7 @@ interface Schema extends SchemaNode {   // Page 根节点即 Schema
 
 **取舍**：
 - **嵌套树而非扁平 map**：教学直观、`dfs` 好写；craft.js 用扁平 map + parent 指针是性能考虑，教学级规模用不上。
-- **binding 描述符 + 字符串模板双语法**（Appsmith 风格）：`{type:'binding', value}` 表达完整表达式；字符串里出现 `{{ }}` 视为模板插值。文档明示两种语法的求值规则（见 `core/expression/evaluator.ts`）。
+- **binding 描述符 + 字符串模板双语法**（Appsmith 风格）：`{type:'binding', value}` 表达完整表达式；字符串里出现 `&#123;&#123; &#125;&#125;` 视为模板插值。文档明示两种语法的求值规则（见 `core/expression/evaluator.ts`）。
 - **事件不绑 JSFunction，绑声明式动作链**（抄 amis 而非 lowcode-engine）：可视化配置优于写函数（见 §6）。
 
 ---
@@ -126,9 +126,9 @@ class MaterialRegistry { register / get / list / groups / isContainer / canDropI
 
 - **求值器四段式**：jsep(解析) → AST → 自研 evaluator。sandbox：scope 用 `Object.create(null)`，成员访问黑名单 `__proto__/constructor/...`，函数调用仅白名单 `safeFns`。
 - **双语法求值** `evalExpr(src, scope)`：
-  - 含 `{{ }}` → 模板模式：切段，每段求值，字符串拼接（String 强转）；
+  - 含 `&#123;&#123; &#125;&#125;` → 模板模式：切段，每段求值，字符串拼接（String 强转）；
   - 否则 → 完整表达式：jsep → AST walk。
-- `resolvePropValue(pv, scope)`：binding 描述符 → `{{ }}` 模板或完整表达式；字面量直接透传；**字符串内含 `{{` 也走模板**。
+- `resolvePropValue(pv, scope)`：binding 描述符 → `&#123;&#123; &#125;&#125;` 模板或完整表达式；字面量直接透传；**字符串里出现双花括号 `&#123;&#123; &#125;&#125;` 起始标记时，也按模板处理**。
 - 作用域：`state`（页面数据域，reactive 普通对象视图）、`item`/`index`（loop）、`params`（页面参数）。设计态用默认值构造。
 - 求值失败不 crash 画布：`tryEvaluate` 返回 `{ok, value|error}`，面板红点提示。
 

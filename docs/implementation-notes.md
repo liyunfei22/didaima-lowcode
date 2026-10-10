@@ -60,15 +60,15 @@
 1. vue-tsc 的 `--noEmit` 在 solution-style tsconfig（`files: []` + references）下**什么都不查**——`type-check` 脚本必须用 `vue-tsc -b`。
 2. TS 6.0 弃用 `baseUrl`；`paths` 直接相对 tsconfig 目录解析即可。
 3. `erasableSyntaxOnly`（TS6 / @vue/tsconfig 默认开）禁止构造器**参数属性**（`constructor(msg, readonly expr)`），改显式字段赋值。
-4. 模板里写演示用的 `<code>{{表达式}}</code>` 被 Vue 当插值吞了——教学页用 `v-pre` 原样输出。
-5. **求值器语义修正**：`evalExpr('纯文本')` 必须返回纯文本而不是抛错（Appsmith 语义：`{{ }}` 才是表达式）；但 `state.count > 2` 这类"看起来是表达式"的要照常抛（面板红点提示的根基）。实现：先求值，只有"解析失败且不含运算符号"才判定为纯文本。
+4. 模板里写演示用的 `<code>&#123;&#123;表达式&#125;&#125;</code>` 被 Vue 当插值吞了——教学页用 `v-pre` 原样输出。
+5. **求值器语义修正**：`evalExpr('纯文本')` 必须返回纯文本而不是抛错（Appsmith 语义：`&#123;&#123; &#125;&#125;` 才是表达式）；但 `state.count > 2` 这类"看起来是表达式"的要照常抛（面板红点提示的根基）。实现：先求值，只有"解析失败且不含运算符号"才判定为纯文本。
 
 ### M2 · 物料体系（Element Plus，2026-10-09）
 
 **做了什么**：18 个物料（Page/Card/Tabs/TabPane/Text/Divider/Input/NumberInput/Select/Radio/Checkbox/Switch/DatePicker/Form/FormItem/Table/TableColumn/Button），每个 = 薄封装 Widget + 完整 meta（configure.props 已配好，M5 属性面板直接消费）；`materials/index.ts` 批量注册进 main.ts；M2 演示页验证 表格 scoped 插槽 + v-model 双向绑定 + tab 切换。
 
 **验证方式**（Playwright 无头交互）：
-- 表格三行数据渲染，`TableColumn(label 为空 + 子节点 Text{{row.status}})` 证明 scoped 插槽作用域注入；
+- 表格三行数据渲染，`TableColumn(label 为空 + 子节点 Text&#123;&#123;row.status&#125;&#125;)` 证明 scoped 插槽作用域注入；
 - 输入框输入"韩梅梅2" → 预览文本实时变 `你好，韩梅梅2`；下拉选"专业版"→ `pro`；开关"开启"→ `VIP: true`，零报错。
 
 **关键设计**：
@@ -156,7 +156,7 @@
 **做了什么**：把 M1 的简易求值器替换成完整版——`jsep` 解析（仅 `算子` 扩展 `??`）+ **自研 AST 手工求值器**（`evaluator.ts` 逐个节点 switch）；沙箱双清单（`MEMBER_BLACKLIST` 成员访问黑名单 + `safeFns` 函数白名单 + 数据方法调用 `METHOD_BLACKLIST`）；DataPanel 完整版（state JSON 编辑应用 + dataSource 行编辑）；PropRow 绑定模式实时求值预览升级成完整表达式。
 
 **验证方式**：
-- 单测 47 个全过，新增覆盖：优先级 `1 + 2*3=7`、左结合、比较、**短路 `&&/||/??` 返回原值**、三元、模板内完整表达式 `{{state.count + 1}}`、白名单 `sum([1,2,3])`、数据方法 `state.items.join(',')`、黑名单 `__proto__`/`constructor` 拒绝、`toString/call/apply` 方法调用拒绝
+- 单测 47 个全过，新增覆盖：优先级 `1 + 2*3=7`、左结合、比较、**短路 `&&/||/??` 返回原值**、三元、模板内完整表达式 `&#123;&#123;state.count + 1&#125;&#125;`、白名单 `sum([1,2,3])`、数据方法 `state.items.join(',')`、黑名单 `__proto__`/`constructor` 拒绝、`toString/call/apply` 方法调用拒绝
 - 浏览器：DataPanel 改 `greeting` → 画布实时变「M7你好」；绑定 `state.form.vip ? 'VIP 客户' : '普通客户'` → 预览「普通客户」→ 画布渲染「普通客户」，零 JS 错误
 
 **关键设计**：
@@ -165,7 +165,7 @@
 - 求值器输出契约（纯文本回传 / 错误抛出）由 evaluator.spec.ts 锁定，M1 的行为在 M7 无缝升级。
 
 **踩过的坑**：
-1. `looksLikeExpression` 最初太保守（运算符集合漏了 `%`、裸标识符 `item`/`true` 没算表达式）→ `7 % 3` 按纯文本返回、`{{item}}` 不插值。修法：裸标识符/数字/引号字面量直接算表达式，带运算符才要字符集判定。
+1. `looksLikeExpression` 最初太保守（运算符集合漏了 `%`、裸标识符 `item`/`true` 没算表达式）→ `7 % 3` 按纯文本返回、`&#123;&#123;item&#125;&#125;` 不插值。修法：裸标识符/数字/引号字面量直接算表达式，带运算符才要字符集判定。
 2. jsep 的 `Expression` 是联合类型，直接 `node as X` 强转报 TS2352——全部改 `as unknown as X`。
 
 ### M8 · 事件动作系统（2026-10-09）
@@ -199,8 +199,8 @@
 
 **关键设计**：
 - **出码 = 渲染引擎的同一次遍历、换 emit 产物**：genNode(node, depth, ctx) 递归 + import 收集 + 事件函数收集，与 SchemaNode 递归一一对应——这是"运行时渲染 vs 出码"两条通道共享一棵 schema 的核心。
-- **textProp 用 Vue 模板语法、attr 用 JS 表达式**：文本内容直接用原始 `{{ }}` 插值（Vue 原生语法）；属性/绑定还原成 `:attr="..."` / `v-model="..."`（v-model 是 Vue 出码比 React 表达力更好的地方）。
+- **textProp 用 Vue 模板语法、attr 用 JS 表达式**：文本内容直接用原始 `&#123;&#123; &#125;&#125;` 插值（Vue 原生语法）；属性/绑定还原成 `:attr="..."` / `v-model="..."`（v-model 是 Vue 出码比 React 表达力更好的地方）。
 
 **踩坑**：
-1. textProp 一开始用 JS 反引号模板串（`${expr}`），但 Vue 模板的**文本插值**只认 `{{ }}`——反引号会当纯文本渲染。属性和文本是两种语法。出码结构单测先于浏览器发现（断言 `{{row.status}}`）。
+1. textProp 一开始用 JS 反引号模板串（`${expr}`），但 Vue 模板的**文本插值**只认 `&#123;&#123; &#125;&#125;`——反引号会当纯文本渲染。属性和文本是两种语法。出码结构单测先于浏览器发现（断言 `&#123;&#123;row.status&#125;&#125;`）。
 2. 出码产物 import 里曾混入 `ElText`（无此组件）——组件映射表是出码安全的边界之一，测试里扫过 import 集合断言。
